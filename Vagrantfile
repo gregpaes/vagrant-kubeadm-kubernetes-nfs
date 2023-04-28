@@ -26,22 +26,22 @@ Vagrant.configure("2") do |config|
   config.vm.box_check_update = true
 
 #
-config.vm.define "nfs-server" do |nfs-server|
-  nfs-server.vm.hostname = "nfs-server"
-  nfs-server.vm.network "private_network", ip: settings["network"]["nsf_server"]
+config.vm.define "nfs-server" do |nfsserver|
+  nfsserver.vm.hostname = "nfs-server"
+  nfsserver.vm.network "private_network", ip: settings["network"]["nsf_server"]
   if settings["shared_folders"]
     settings["shared_folders"].each do |shared_folder|
-      nfs-server.vm.synced_folder shared_folder["host_path"], shared_folder["vm_path"]
+      nfsserver.vm.synced_folder shared_folder["host_path"], shared_folder["vm_path"]
     end
   end
-  nfs-server.vm.provider "virtualbox" do |vb|
+  nfsserver.vm.provider "virtualbox" do |vb|
       vb.cpus = settings["nodes"]["workers"]["cpu"]
       vb.memory = settings["nodes"]["workers"]["memory"]
       if settings["cluster_name"] and settings["cluster_name"] != ""
         vb.customize ["modifyvm", :id, "--groups", ("/" + settings["cluster_name"])]
       end
   end
-  nfs-server.vm.provision "shell",
+  nfsserver.vm.provision "shell",
     env: {
       "DNS_SERVERS" => settings["network"]["dns_servers"].join(" "),
     },
