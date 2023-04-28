@@ -7,9 +7,11 @@ Current k8s version for CKA, CKAD and CKS exam: 1.26
 
 Refer this link for documentation: https://devopscube.com/kubernetes-cluster-vagrant/
 
-## 🚀 CKA, CKAD, CKS or KCNA Coupon Codes
+## About this repo
+This repo is a fork from https://github.com/techiescamp/vagrant-kubeadm-kubernetes
+In which we made same tweaks to enable persistence volumes, the addition of a nfs-server VM, nfs-subdir-external-provisioner on the k8s cluster
 
-If you are preparing for CKA, CKAD, CKS, or KCNA exam, **save 30%** today using code **HOMERUN30** at https://kube.promo/devops. It is a limited-time offer. Or Check out [Linux Foundation coupon](https://scriptcrunch.com/linux-foundation-coupon/) page for the latest voucher codes.
+Refer this link for nfs-subdir-external-provisioner documentation: https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner
 
 ## Prerequisites
 
@@ -38,14 +40,14 @@ https://discuss.hashicorp.com/t/vagrant-2-2-18-osx-11-6-cannot-create-private-ne
 To provision the cluster, execute the following commands.
 
 ```shell
-git clone https://github.com/scriptcamp/vagrant-kubeadm-kubernetes.git
-cd vagrant-kubeadm-kubernetes
+git clone https://github.com/gregpaes/vagrant-kubeadm-kubernetes-nfs.git
+cd vagrant-kubeadm-kubernetes-nfs
 vagrant up
 ```
 ## Set Kubeconfig file variable
 
 ```shell
-cd vagrant-kubeadm-kubernetes
+cd vagrant-kubeadm-kubernetes-nfs
 cd configs
 export KUBECONFIG=$(pwd)/config
 ```

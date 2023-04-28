@@ -25,6 +25,29 @@ Vagrant.configure("2") do |config|
   end
   config.vm.box_check_update = true
 
+#
+config.vm.define "nfsserver" do |nfs-server|
+  nfs-server.vm.hostname = "nfs-server"
+  nfs-server.vm.network "private_network", ip: settings["network"]["nsf_server"]
+  if settings["shared_folders"]
+    settings["shared_folders"].each do |shared_folder|
+      nfs-server.vm.synced_folder shared_folder["host_path"], shared_folder["vm_path"]
+    end
+  end
+  nfs-server.vm.provider "virtualbox" do |vb|
+      vb.cpus = settings["nodes"]["workers"]["cpu"]
+      vb.memory = settings["nodes"]["workers"]["memory"]
+      if settings["cluster_name"] and settings["cluster_name"] != ""
+        vb.customize ["modifyvm", :id, "--groups", ("/" + settings["cluster_name"])]
+      end
+  end
+  nfs-server.vm.provision "shell",
+    env: {
+      "DNS_SERVERS" => settings["network"]["dns_servers"].join(" "),
+    },
+    path: "scripts/nfs.sh"
+  end
+#
   config.vm.define "master" do |master|
     master.vm.hostname = "master-node"
     master.vm.network "private_network", ip: settings["network"]["control_ip"]
@@ -53,7 +76,8 @@ Vagrant.configure("2") do |config|
         "CALICO_VERSION" => settings["software"]["calico"],
         "CONTROL_IP" => settings["network"]["control_ip"],
         "POD_CIDR" => settings["network"]["pod_cidr"],
-        "SERVICE_CIDR" => settings["network"]["service_cidr"]
+        "SERVICE_CIDR" => settings["network"]["service_cidr"],
+        "NFS_SERVER" => settings["network"]["nsf_server"],
       },
       path: "scripts/master.sh"
   end

@@ -62,4 +62,25 @@ EOF
 Use it to log in at:
 http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/#/overview?namespace=kubernetes-dashboard
 "
+
+  cat <<EOF | sudo -i -u vagrant kubectl -n kubernetes-dashboard apply -f -
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubernetes-dashboard-nodeport
+  namespace: kubernetes-dashboard
+  labels:
+    k8s-app: kubernetes-dashboard
+spec:
+  selector:
+    k8s-app: kubernetes-dashboard
+  type: NodePort
+  ports:
+    - port: 443      # Cluster IP, i.e. http://172.17.45.149:443
+      nodePort: 30443 # (EXTERNAL-IP VirtualBox IPs) i.e. http://10.0.0.11:30443
+      targetPort: 8443 # Application port
+      protocol: TCP
+EOF
+
+
 fi
