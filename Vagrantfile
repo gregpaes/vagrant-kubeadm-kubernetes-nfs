@@ -26,7 +26,7 @@ Vagrant.configure("2") do |config|
   config.vm.box_check_update = true
 
 #
-config.vm.define "nfsserver" do |nfs-server|
+config.vm.define "nfs-server" do |nfs-server|
   nfs-server.vm.hostname = "nfs-server"
   nfs-server.vm.network "private_network", ip: settings["network"]["nsf_server"]
   if settings["shared_folders"]
