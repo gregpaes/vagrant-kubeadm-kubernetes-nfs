@@ -59,4 +59,5 @@ nfs-subdir-external-provisioner/nfs-subdir-external-provisioner \
 --namespace nfs-provisioner \
 --create-namespace \
 --set nfs.server=$NFS_SERVER \
---set nfs.path=/srv/nfs/kubedata
+--set nfs.path=/srv/nfs/kubedata \
+--set storageClass.defaultClass=true
