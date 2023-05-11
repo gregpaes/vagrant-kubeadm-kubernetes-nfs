@@ -24,29 +24,9 @@ Vagrant.configure("2") do |config|
     config.vm.box = settings["software"]["box"]
   end
   config.vm.box_check_update = true
+  config.ssh.username = "vagrant"
+  config.ssh.password = "vagrant"
 
-#
-config.vm.define "nfs-server" do |nfsserver|
-  nfsserver.vm.hostname = "nfs-server"
-  nfsserver.vm.network "private_network", ip: settings["network"]["nsf_server"]
-  if settings["shared_folders"]
-    settings["shared_folders"].each do |shared_folder|
-      nfsserver.vm.synced_folder shared_folder["host_path"], shared_folder["vm_path"]
-    end
-  end
-  nfsserver.vm.provider "virtualbox" do |vb|
-      vb.cpus = settings["nodes"]["workers"]["cpu"]
-      vb.memory = settings["nodes"]["workers"]["memory"]
-      if settings["cluster_name"] and settings["cluster_name"] != ""
-        vb.customize ["modifyvm", :id, "--groups", ("/" + settings["cluster_name"])]
-      end
-  end
-  nfsserver.vm.provision "shell",
-    env: {
-      "DNS_SERVERS" => settings["network"]["dns_servers"].join(" "),
-    },
-    path: "scripts/nfs.sh"
-  end
 #
   config.vm.define "master" do |master|
     master.vm.hostname = "master-node"
@@ -80,6 +60,11 @@ config.vm.define "nfs-server" do |nfsserver|
         "NFS_SERVER" => settings["network"]["nsf_server"],
       },
       path: "scripts/master.sh"
+    master.vm.provision "shell",
+      env: {
+        "DNS_SERVERS" => settings["network"]["dns_servers"].join(" "),
+      },
+      path: "scripts/nfs.sh"
   end
 
   (1..NUM_WORKER_NODES).each do |i|

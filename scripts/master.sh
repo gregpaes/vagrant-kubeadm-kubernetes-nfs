@@ -6,15 +6,15 @@ set -euxo pipefail
 
 NODENAME=$(hostname -s)
 
-sudo kubeadm config images pull
+kubeadm config images pull
 
 echo "Preflight Check Passed: Downloaded All Required Images"
 
-sudo kubeadm init --apiserver-advertise-address=$CONTROL_IP --apiserver-cert-extra-sans=$CONTROL_IP --pod-network-cidr=$POD_CIDR --service-cidr=$SERVICE_CIDR --node-name "$NODENAME" --ignore-preflight-errors Swap
+kubeadm init --apiserver-advertise-address=$CONTROL_IP --apiserver-cert-extra-sans=$CONTROL_IP --pod-network-cidr=$POD_CIDR --service-cidr=$SERVICE_CIDR --node-name "$NODENAME" --ignore-preflight-errors=all --upload-certs
 
 mkdir -p "$HOME"/.kube
-sudo cp -i /etc/kubernetes/admin.conf "$HOME"/.kube/config
-sudo chown "$(id -u)":"$(id -g)" "$HOME"/.kube/config
+/bin/cp -rf /etc/kubernetes/admin.conf "$HOME"/.kube/config
+chown "$(id -u)":"$(id -g)" "$HOME"/.kube/config
 
 # Save Configs to shared /Vagrant location
 
@@ -28,28 +28,21 @@ else
   mkdir -p $config_path
 fi
 
-cp -i /etc/kubernetes/admin.conf $config_path/config
+/bin/cp -rf /etc/kubernetes/admin.conf $config_path/config
 touch $config_path/join.sh
 chmod +x $config_path/join.sh
 
 kubeadm token create --print-join-command > $config_path/join.sh
 
+mkdir -p /home/vagrant/.kube
+/bin/cp -rf $config_path/config /home/vagrant/.kube/
+chown -R vagrant:vagrant /home/vagrant/.kube/config
+chown -R vagrant:vagrant $config_path
+sleep 60
+
 # Install Calico Network Plugin
 
-curl https://raw.githubusercontent.com/projectcalico/calico/v${CALICO_VERSION}/manifests/calico.yaml -O
-
-kubectl apply -f calico.yaml
-
-sudo -i -u vagrant bash << EOF
-whoami
-mkdir -p /home/vagrant/.kube
-sudo cp -i $config_path/config /home/vagrant/.kube/
-sudo chown 1000:1000 /home/vagrant/.kube/config
-EOF
-
-# Install Metrics Server
-
-kubectl apply -f https://raw.githubusercontent.com/techiescamp/kubeadm-scripts/main/manifests/metrics-server.yaml
+kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v${CALICO_VERSION}/manifests/calico.yaml
 
 # Install nfs-provider
 helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
@@ -58,6 +51,26 @@ helm upgrade --install nfs-subdir-external-provisioner \
 nfs-subdir-external-provisioner/nfs-subdir-external-provisioner \
 --namespace nfs-provisioner \
 --create-namespace \
---set nfs.server=$NFS_SERVER \
+--set nfs.server=$CONTROL_IP \
 --set nfs.path=/srv/nfs/kubedata \
 --set storageClass.defaultClass=true
+
+sleep 60
+
+# Install Metrics Server
+
+#kubectl apply -f https://raw.githubusercontent.com/techiescamp/kubeadm-scripts/main/manifests/metrics-server.yaml
+
+helm repo add metrics-server https://kubernetes-sigs.github.io/metrics-server/
+
+helm upgrade --install metrics-server metrics-server/metrics-server \
+--namespace kube-system \
+--set containerPort=4443 \
+--set hostNetwork.enabled=true \
+--set defaultArgs[0]="--cert-dir=/tmp" \
+--set defaultArgs[1]="--kubelet-preferred-address-types=InternalIP" \
+--set defaultArgs[2]="--kubelet-use-node-status-port" \
+--set defaultArgs[3]="--metric-resolution=15s" \
+--set defaultArgs[4]="--kubelet-insecure-tls" \
+--set readinessProbe.initialDelaySeconds=300 \
+--set readinessProbe.periodSeconds=30

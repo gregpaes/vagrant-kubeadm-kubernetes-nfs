@@ -7,14 +7,14 @@ set -euxo pipefail
 # DNS Setting
 echo "[TASK 1] DNS Setting"
 if [ ! -d /etc/systemd/resolved.conf.d ]; then
-	sudo mkdir /etc/systemd/resolved.conf.d/
+	mkdir /etc/systemd/resolved.conf.d/
 fi
-cat <<EOF | sudo tee /etc/systemd/resolved.conf.d/dns_servers.conf
+cat <<EOF | tee /etc/systemd/resolved.conf.d/dns_servers.conf
 [Resolve]
 DNS=${DNS_SERVERS}
 EOF
 
-sudo systemctl restart systemd-resolved
+systemctl restart systemd-resolved
 
 # # Update hosts file
 # echo "[TASK 1] Update /etc/hosts file"
@@ -26,9 +26,9 @@ sudo systemctl restart systemd-resolved
 # EOF
 
 echo "[TASK 2] Download and install NFS server"
-# yes| sudo pacman -S nfs-utils
-sudo apt-get update
-sudo apt-get install -y apt-transport-https ca-certificates curl nfs-kernel-server
+# yes| pacman -S nfs-utils
+apt-get update
+apt-get install -y apt-transport-https ca-certificates curl nfs-kernel-server
 
 echo "[TASK 3] Create a kubedata directory"
 mkdir -p /srv/nfs/kubedata
@@ -38,7 +38,7 @@ mkdir -p /srv/nfs/kubedata
 # mkdir -p /srv/nfs/kubedata/logs
 
 echo "[TASK 4] Update the shared folder access"
-sudo chown nobody:nogroup /srv/nfs/kubedata
+chown nobody:nogroup /srv/nfs/kubedata
 
 echo "[TASK 5] Make the kubedata directory available on the network"
 cat >>/etc/exports<<EOF
@@ -46,10 +46,10 @@ cat >>/etc/exports<<EOF
 EOF
 
 echo "[TASK 6] Export the updates"
-sudo exportfs -rav
+exportfs -rav
 
 echo "[TASK 7] Enable NFS Server"
-sudo systemctl enable nfs-kernel-server
+systemctl enable nfs-kernel-server
 
 echo "[TASK 8] Start NFS Server"
-sudo systemctl restart nfs-kernel-server
+systemctl restart nfs-kernel-server
