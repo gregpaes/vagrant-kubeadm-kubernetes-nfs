@@ -42,7 +42,7 @@ To provision the cluster, execute the following commands.
 ```shell
 git clone https://github.com/gregpaes/vagrant-kubeadm-kubernetes-nfs.git
 cd vagrant-kubeadm-kubernetes-nfs
-vagrant up
+vagrant up --no-parallel
 ```
 ## Set Kubeconfig file variable
 
